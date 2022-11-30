@@ -50,6 +50,9 @@ def crawlThisWeeksMenu(url: str) -> list[Restaurant]:
         else:
             continue
 
+        if not cost.strip():
+            cost = '-1'
+
         hanwool.addMenu(cornerName, weekdays[weekdayCnt], businessHour, menu, int(cost))
 
         if weekdayCnt == Weekday.Fri.value:
@@ -75,11 +78,19 @@ def crawlThisWeeksMenu(url: str) -> list[Restaurant]:
 
         lunchMenu = lunchStr[:lunchStr.find('￦')]
         lunchCost = lunchStr[lunchStr.find('￦') + 1:]
+
+        if not lunchCost.strip():
+            lunchCost = '-1'
+
         hanwool.addMenu(cornerName, weekdays[weekdayCnt],
             HANWOOL_LUNCH, lunchMenu, int(lunchCost))
 
         dinnerMenu = dinnerStr[:dinnerStr.find('￦')]
         dinnerCost = dinnerStr[dinnerStr.find('￦') + 1:]
+
+        if not dinnerCost.strip():
+            dinnerCost = '-1'
+
         hanwool.addMenu(cornerName, weekdays[weekdayCnt],
             HANWOOL_DINNER, dinnerMenu, int(dinnerCost))
 
