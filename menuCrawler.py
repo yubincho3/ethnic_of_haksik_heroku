@@ -63,14 +63,12 @@ def crawlThisWeeksMenu(url: str = CRAWL_URL) -> list[Restaurant]:
         else:
             hanwool.addMenu(cornerName, weekdays[weekdayCnt], businessHour, menu, int(cost))
 
-        # 통일시키기!!!!!!!!!!!!!!!!!!!
-        if weekdayCnt == Weekday.Fri.value:
-            weekdayCnt = Weekday.Mon.value
+        weekdayCnt = (weekdayCnt + 1) % 7
+
+        if weekdayCnt == Weekday.Sun.value:
             cornerIdx += 1
             if cornerIdx < len(CORNER_NAMES[Restaurants.Hanwool]):
                 cornerName = CORNER_NAMES[Restaurants.Hanwool][cornerIdx]
-        else:
-            weekdayCnt += 1
 
     # Gukbab.chef
     cornerName = CORNER_NAMES[Restaurants.Hanwool][cornerIdx]
@@ -405,7 +403,3 @@ def crawlThisWeeksMenu(url: str = CRAWL_URL) -> list[Restaurant]:
     restaurantList.append(kbobplus)
 
     return restaurantList
-
-
-for i in crawlThisWeeksMenu('https://www.kookmin.ac.kr/user/unLvlh/lvlhSpor/todayMenu/index.do'):
-    print(i)
