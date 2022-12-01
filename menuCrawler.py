@@ -63,15 +63,18 @@ def crawlThisWeeksMenu(url: str = CRAWL_URL) -> list[Restaurant]:
         else:
             hanwool.addMenu(cornerName, weekdays[weekdayCnt], businessHour, menu, int(cost))
 
-        weekdayCnt = (weekdayCnt + 1) % 7
+        weekdayCnt += 1
 
-        if weekdayCnt == Weekday.Sun.value:
+        if weekdayCnt == Weekday.Sat.value:
+            weekdayCnt = 0
             cornerIdx += 1
             if cornerIdx < len(CORNER_NAMES[Restaurants.Hanwool]):
                 cornerName = CORNER_NAMES[Restaurants.Hanwool][cornerIdx]
 
     # Gukbab.chef
+    cornerIdx += 1
     cornerName = CORNER_NAMES[Restaurants.Hanwool][cornerIdx]
+
     weekdayCnt = Weekday.Mon.value
     idx += 4
 
@@ -85,27 +88,51 @@ def crawlThisWeeksMenu(url: str = CRAWL_URL) -> list[Restaurant]:
                 .replace('<br>', '')\
                 .replace('}', '')
 
-            try:
-                lunchMenu = lunchStr[:lunchStr.find('￦')]
-                lunchCost = lunchStr[lunchStr.find('￦') + 1:]
+            i = 0
+            while i < len(lunchStr):
+                menu = ''
+                cost = ''
 
-                if not lunchCost.strip():
-                    lunchCost = '-1'
-            except: pass
-            else:
-                hanwool.addMenu(cornerName, weekdays[weekdayCnt],
-                    HANWOOL_LUNCH, lunchMenu, int(lunchCost))
+                while i < len(lunchStr) and lunchStr[i] != '￦':
+                    menu += lunchStr[i]
+                    i += 1
 
-            try:
-                dinnerMenu = dinnerStr[:dinnerStr.find('￦')]
-                dinnerCost = dinnerStr[dinnerStr.find('￦') + 1:]
+                i += 1
+                while i < len(lunchStr) and lunchStr[i].isdigit():
+                    cost += lunchStr[i]
+                    i += 1
 
-                if not dinnerCost.strip():
-                    dinnerCost = '-1'
-            except: pass
-            else:
-                hanwool.addMenu(cornerName, weekdays[weekdayCnt],
-                    HANWOOL_DINNER, dinnerMenu, int(dinnerCost))
+                if not cost.strip():
+                    cost = '-1'
+
+                if menu.strip():
+                    if menu[0] != '[':
+                        menu = '[중식]' + menu
+                    hanwool.addMenu(cornerName, weekdays[weekdayCnt],
+                        HANWOOL_LUNCH, menu, int(cost))
+
+            i = 0
+            while i < len(dinnerStr):
+                menu = ''
+                cost = ''
+
+                while i < len(dinnerStr) and dinnerStr[i] != '￦':
+                    menu += dinnerStr[i]
+                    i += 1
+
+                i += 1
+                while i < len(dinnerStr) and dinnerStr[i].isdigit():
+                    cost += dinnerStr[i]
+                    i += 1
+
+                if not cost.strip():
+                    cost = '-1'
+
+                if menu.strip():
+                    if menu[0] != '[':
+                        menu = '[석식]' + menu
+                    hanwool.addMenu(cornerName, weekdays[weekdayCnt],
+                        HANWOOL_DINNER, menu, int(cost))
         except: pass
 
         weekdayCnt += 1

@@ -95,12 +95,6 @@ class Corner:
 
         return ret
 
-    # FOR TEST
-    def __str__(self):
-        a = [f'{i.name}: {j}' for i in weekdays for j in self.menu[i]]
-        b = "\n".join(a)
-        return f'{self.name}: {b}'
-
 class Restaurant:
     def __init__(self, nameEnum: Restaurants):
         self.corners = {corner: Corner(corner) for corner in CORNER_NAMES[nameEnum]}
@@ -118,7 +112,3 @@ class Restaurant:
     # cost: 가격
     def addMenu(self, corner: str, weekday: Weekday, time: Time, menu: str, cost: int):
         self.corners[corner].addMenu(weekday, time, menu, cost)
-
-    # FOR TEST
-    def __str__(self):
-        return f'!{self.name}!\n'+"\n".join([*map(str, self.corners.values())])
