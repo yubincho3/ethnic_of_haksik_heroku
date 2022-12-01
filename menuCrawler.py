@@ -1,6 +1,8 @@
 from bs4 import BeautifulSoup
 import requests
 
+import re
+
 from restaurant import *
 
 CRAWL_URL = 'https://www.kookmin.ac.kr/user/unLvlh/lvlhSpor/todayMenu/index.do'
@@ -24,13 +26,15 @@ def crawlThisWeeksMenu(url: str = CRAWL_URL) -> list[Restaurant]:
     menuTexts = [e.get('value') for e in bs.find_all('input', {'name': 'aa'})]
 
     # -------------한울식당-------------- #
-    cornerIdx = 0  # 현재 식당의 코너 인덱스(CORNER_NAMES)
-    weekdayCnt = Weekday.Mon.value # 식당 메뉴판 요일
+    hanwool = Restaurant(Restaurants.Hanwool)
 
-    cornerName = CORNER_NAMES[Restaraunts.Hanwool][cornerIdx]
-    hanwool = Restaurant(Restaraunts.Hanwool)
-    idx = 30 # 메뉴 텍스트들의 리스트의 인덱스
+    cornerIdx = 0    # 현재 식당의 코너 인덱스(CORNER_NAMES)
+    cornerName = CORNER_NAMES[Restaurants.Hanwool][cornerIdx]
 
+    weekdayCnt = Weekday.Mon.value  # 식당 메뉴판 요일
+    idx = 30    # 메뉴 텍스트들의 리스트의 인덱스
+
+    # 2코너(NOODLE) ~ 4코너(RICE.oven)
     for _ in range(19):
         try:
             menu = menuTexts[idx]\
@@ -59,15 +63,17 @@ def crawlThisWeeksMenu(url: str = CRAWL_URL) -> list[Restaurant]:
         else:
             hanwool.addMenu(cornerName, weekdays[weekdayCnt], businessHour, menu, int(cost))
 
+        # 통일시키기!!!!!!!!!!!!!!!!!!!
         if weekdayCnt == Weekday.Fri.value:
             weekdayCnt = Weekday.Mon.value
             cornerIdx += 1
-            cornerName = CORNER_NAMES[Restaraunts.Hanwool][cornerIdx]
+            if cornerIdx < len(CORNER_NAMES[Restaurants.Hanwool]):
+                cornerName = CORNER_NAMES[Restaurants.Hanwool][cornerIdx]
         else:
             weekdayCnt += 1
 
-    # 한울식당의 Gukbab.chef에 대해서는 따로 처리
-    cornerName = CORNER_NAMES[Restaraunts.Hanwool][cornerIdx]
+    # Gukbab.chef
+    cornerName = CORNER_NAMES[Restaurants.Hanwool][cornerIdx]
     weekdayCnt = Weekday.Mon.value
     idx += 4
 
@@ -109,52 +115,297 @@ def crawlThisWeeksMenu(url: str = CRAWL_URL) -> list[Restaurant]:
 
     restaurantList.append(hanwool)
 
-
     # -------------학생식당-------------- #
+    hakseng = Restaurant(Restaurants.Hakseng)
+
     cornerIdx = 0
-    weekdayCnt = 0
+    cornerName = CORNER_NAMES[Restaurants.Hakseng][cornerIdx]
 
-    cornerName = CORNER_NAMES[Restaraunts.Hakseng][0]
-    hakseng = Restaurant(Restaraunts.Hakseng)
-    idx += 18
+    weekdayCnt = Weekday.Sun.value
+    idx += 30
 
-    for _ in range(77):
-        menu = menuTexts[idx]\
-            .replace('{fourName=메뉴, fourValue=', '')[:-1]\
-            .replace('<br>', ', ')\
-            .strip(', ')
-        cost = menuTexts[idx + 1]\
-            .replace('{fourName=가격, fourValue=', '')\
-            .replace('<span class=\'orange_txt\'>￦', '')\
-            .replace('</span>', '')\
-            .replace('<br>', '')\
-            .strip()[:-1]
+    # 가마 중식 ~ 데일리밥 중식
+    for _ in range(35):
+        try:
+            menu = menuTexts[idx].replace('{fourName=메뉴, fourValue=', '')[:-1]
+            cost = menuTexts[idx + 1]\
+                .replace('{fourName=가격, fourValue=', '')\
+                .replace('<span class=\'orange_txt\'>￦', '')\
+                .replace('</span>', '')\
+                .replace('<br>', '')\
+                .strip()[:-1]
+            idx += 2
+
+            menu = re.sub('(<br>)+', ', ', menu).strip(', ')
+
+            if not menu.strip() or menu[0] == '※':
+                raise Exception()
+
+            if not cost.strip():
+                cost = '-1'
+        except: pass
+        else:
+            hakseng.addMenu(cornerName, weekdays[weekdayCnt], 
+                HAKSENG_LUNCH, menu, int(cost))
+
+        weekdayCnt = (weekdayCnt + 1) % 7
+
+        if weekdayCnt == Weekday.Sun.value:
+            cornerIdx += 1
+            if cornerIdx < len(CORNER_NAMES[Restaurants.Hakseng]):
+                cornerName = CORNER_NAMES[Restaurants.Hakseng][cornerIdx]
+
+    # 가마 석식 ~ 데일리밥 석식
+    for _ in range(21):
+        try:
+            menu = menuTexts[idx].replace('{fourName=메뉴, fourValue=', '')[:-1]
+            cost = menuTexts[idx + 1]\
+                .replace('{fourName=가격, fourValue=', '')\
+                .replace('<span class=\'orange_txt\'>￦', '')\
+                .replace('</span>', '')\
+                .replace('<br>', '')\
+                .strip()[:-1]
+            idx += 2
+
+            menu = re.sub('(<br>)+', ', ', menu).strip(', ')
+
+            if not menu.strip() or menu[0] == '※':
+                raise Exception()
+
+            if not cost.strip():
+                cost = '-1'
+        except: pass
+        else:
+            hakseng.addMenu(cornerName, weekdays[weekdayCnt], 
+                HAKSENG_DINNER, menu, int(cost))
+
+        weekdayCnt = (weekdayCnt + 1) % 7
+
+        if weekdayCnt == Weekday.Sun.value:
+            cornerIdx += 1
+            if cornerIdx < len(CORNER_NAMES[Restaurants.Hakseng]):
+                cornerName = CORNER_NAMES[Restaurants.Hakseng][cornerIdx]
+
+    # 차이웨이
+    idx += 2
+    menuText = menuTexts[idx].replace('{fourName=메뉴, fourValue=', '')[:-1]
+    menuText = re.sub('<br>', '\t', menuText)
+    menuText = re.sub('\t+', '\t', menuText)
+
+    menuList = menuText.strip().split()
+    for i in range(0, len(menuList), 2):
+        for j in Weekday:
+            hakseng.addMenu(cornerName, j, HAKSENG_CHAIWAY,
+                menuList[i], int(menuList[i + 1]))
+    
+    restaurantList.append(hakseng)
+
+    # -------------교직원 식당-------------- #
+    gyojikwon = Restaurant(Restaurants.Gyojikwon)
+
+    cornerIdx = 0
+    cornerName = CORNER_NAMES[Restaurants.Gyojikwon][cornerIdx]
+
+    weekdayCnt = Weekday.Mon.value
+    idx += 28
+
+    # 키친1 ~ 오늘의 샐러드
+    for _ in range(21):
+        try:
+            menu = menuTexts[idx].replace('{fourName=메뉴, fourValue=', '')[:-1]
+            cost = menuTexts[idx + 1]\
+                .replace('{fourName=가격, fourValue=', '')\
+                .replace('<span class=\'orange_txt\'>￦', '')\
+                .replace('</span>', '')\
+                .replace('<br>', '')\
+                .strip()[:-1]
+            idx += 2
+
+            menu = re.sub('(<br>)+', ', ', menu).strip(', ')
+
+            if not menu.strip() or menu[0] == '※':
+                raise Exception()
+
+            if not cost.strip():
+                cost = '-1'
+        except: pass
+        else:
+            gyojikwon.addMenu(cornerName, weekdays[weekdayCnt], 
+                GYOJIKWON_LUNCH, menu, int(cost))
+
+        weekdayCnt = (weekdayCnt + 1) % 7
+
+        if weekdayCnt == Weekday.Sun.value:
+            cornerIdx += 1
+            if cornerIdx < len(CORNER_NAMES[Restaurants.Gyojikwon]):
+                cornerName = CORNER_NAMES[Restaurants.Gyojikwon][cornerIdx]
+
+    # 석식
+    for _ in range(5):
+        try:
+            menu = menuTexts[idx].replace('{fourName=메뉴, fourValue=', '')[:-1]
+            cost = menuTexts[idx + 1]\
+                .replace('{fourName=가격, fourValue=', '')\
+                .replace('<span class=\'orange_txt\'>￦', '')\
+                .replace('</span>', '')\
+                .replace('<br>', '')\
+                .strip()[:-1]
+            idx += 2
+
+            menu = re.sub('(<br>)+', ', ', menu).strip(', ')
+
+            if not menu.strip() or menu[0] == '※':
+                raise Exception()
+
+            if not cost.strip():
+                cost = '-1'
+        except: pass
+        else:
+            gyojikwon.addMenu(cornerName, weekdays[weekdayCnt], 
+                GYOJIKWON_DINNER, menu, int(cost))
+
+        weekdayCnt += 1
+
+    restaurantList.append(gyojikwon)
+
+    # -------------청향(한식당)-------------
+    cheonghyang_han = Restaurant(Restaurants.Cheonghyang_Han)
+
+    cornerIdx = 0
+    cornerName = CORNER_NAMES[Restaurants.Cheonghyang_Han][cornerIdx]
+
+    weekdayCnt = Weekday.Mon.value
+    idx += 4
+
+    for _ in range(27):
+        try:
+            menu = menuTexts[idx].replace('{fourName=메뉴, fourValue=', '')[:-1]
+            menu = re.sub('(<br>)+', ' ', menu)
+            menu = re.sub(' +', ' ', menu.strip())
+            cost = menuTexts[idx + 1]\
+                .replace('{fourName=가격, fourValue=', '')\
+                .replace('<span class=\'orange_txt\'>￦', '')\
+                .replace('</span>', '')\
+                .replace('<br>', '')\
+                .strip()[:-1]
+            idx += 2
+
+            if not menu.strip():
+                raise Exception()
+
+            if not cost.strip():
+                cost = '-1'
+        except: pass
+        else:
+            cheonghyang_han.addMenu(cornerName, weekdays[weekdayCnt], 
+                CHEONGHYANG_LUNCH, menu, int(cost))
+            cheonghyang_han.addMenu(cornerName, weekdays[weekdayCnt], 
+                CHEONGHYANG_DINNER, menu, int(cost))
+
+        weekdayCnt = (weekdayCnt + 1) % 7
+
+        if weekdayCnt == Weekday.Sun.value:
+            cornerIdx += 1
+            if cornerIdx < len(CORNER_NAMES[Restaurants.Cheonghyang_Han]):
+                cornerName = CORNER_NAMES[Restaurants.Cheonghyang_Han][cornerIdx]
+
+    restaurantList.append(cheonghyang_han)
+
+    # -------------청향(양식당)-------------
+    cheonghyang_yang = Restaurant(Restaurants.Cheonghyang_Yang)
+
+    cornerIdx = 0
+    cornerName = CORNER_NAMES[Restaurants.Cheonghyang_Yang][cornerIdx]
+
+    idx += 44
+    for _ in range(3):
+        menuText = menuTexts[idx].replace('{fourName=메뉴, fourValue=', '')[:-1]\
+            .replace('원', '')\
+            .replace(',', '')
+        menuText = re.sub('(<br>|[)])+', ' ', menuText)
+        menuText = re.sub(' +', ' ', menuText.replace(' (', '').strip())
+
+        idx += 14
+
+        menuList = menuText.strip().split()
+        for i in range(0, len(menuList), 2):
+            for j in range(5):
+                cheonghyang_yang.addMenu(cornerName, weekdays[j], CHEONGHYANG_LUNCH,
+                    menuList[i], int(menuList[i + 1]))
+
+        cornerIdx += 1
+        if cornerIdx < len(CORNER_NAMES[Restaurants.Cheonghyang_Yang]):
+            cornerName = CORNER_NAMES[Restaurants.Cheonghyang_Yang][cornerIdx]
+
+    restaurantList.append(cheonghyang_yang)
+
+    # 생활관식당은 넘어간다.
+    idx += 42
+
+    # K-Bob+의 운영시간을 저장한다.
+    times = []
+    for _ in range(5):
+        hours = []
+
+        i = 0
+        while i < len(menuTexts[idx]):
+            hourString = ''
+            while menuTexts[idx][i].isdigit():
+                hourString += menuTexts[idx][i]
+                i += 1
+
+            if hourString:
+                hours.append(int(hourString))
+
+            i += 1
+
+        times.append(Time((hours[0], 0), (hours[1], 0)))
         idx += 2
-        print(menu)
-        input(cost)
-        if menu:
-            continue
 
-        #if cornerIdx == CORNER_NAMES[Restaraunts.Hakseng].index('')
+    # -------------K-Bob+-------------
+    kbobplus = Restaurant(Restaurants.K_Bobplus)
 
-        input(cost)
+    cornerIdx = 0
+    cornerName = CORNER_NAMES[Restaurants.K_Bobplus][cornerIdx]
+
+    idx += 4
+    menuText = menuTexts[idx].replace('{fourName=메뉴, fourValue=', '')[:-1]\
+        .replace('<br>', ' ')\
+        .replace('￦', '')\
+        .replace(',', '')
+    menuText = re.sub(' +', ' ', menuText)
+
+    # 간편도시락
+    menuList = menuText.strip().split()
+    for i in range(0, len(menuList), 2):
+        for j in range(5):
+            kbobplus.addMenu(cornerName, weekdays[j], times[j],
+                menuList[i], int(menuList[i + 1]))
+
+    # 김밥
+    cornerIdx += 1
+    cornerName = CORNER_NAMES[Restaurants.K_Bobplus][cornerIdx]
+
+    idx += 14
+    for i in range(5):
+        menuText = menuTexts[idx].replace('{fourName=메뉴, fourValue=', '')[:-1]\
+            .replace('<br>', ' ')\
+            .replace('￦', '')\
+            .replace(',', '')
+        menuText = re.sub(' +', ' ', menuText)
+        idx += 2
+
+        menuList = menuText.strip().split()
+        for j in range(0, len(menuList), 2):
+            menu = menuList[j]
+            cost = int(menuList[j + 1])
+
+            kbobplus.addMenu(cornerName, weekdays[i], times[i], menu, cost)
+
+    restaurantList.append(kbobplus)
 
     return restaurantList
 
-    # -------------교직원 식당-------------- #
-    # for i in range(28):
 
-    # 청향(한식당)
-    # for i in range(49):
-
-    # 청향(양식당)
-    # for i in range(28):
-
-    # 생활관식당은 넘어간다.
-    # idx += 42
-
-    # K-Bob+
-    # for i in range(5):
-
-#for i in crawlThisWeeksMenu('https://www.kookmin.ac.kr/user/unLvlh/lvlhSpor/todayMenu/index.do'):
-#    print(i)
+for i in crawlThisWeeksMenu('https://www.kookmin.ac.kr/user/unLvlh/lvlhSpor/todayMenu/index.do'):
+    print(i)

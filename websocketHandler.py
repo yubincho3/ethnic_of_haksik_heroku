@@ -21,6 +21,7 @@ async def handler(websock):
                     tempStr += '\n'.join(map(str, cornerMenu)) + '\n'
 
             if tempStr:
-                result += f'{restaurant.name}\n{tempStr}'
+                restaurantName = Restaurants[restaurant.name].value
+                result += f'{restaurantName}\n{tempStr}'
 
         await websock.send(result)

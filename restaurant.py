@@ -1,9 +1,8 @@
-from datetime import datetime
 import enum
 
 from weekday import *
 
-class Restaraunts(enum.Enum):
+class Restaurants(enum.Enum):
     Hanwool          = '한울식당(법학관 지하1층)'
     Hakseng          = '학생식당'
     Gyojikwon        = '교직원식당'
@@ -12,15 +11,16 @@ class Restaraunts(enum.Enum):
     K_Bobplus        = 'K-Bob+'
 
 CORNER_NAMES = {
-    Restaraunts.Hanwool: ['2코너 NOODLE', '3코너 CUTLET', '4코너 RICE.oven', '5코너 GUKBOB.Chef'],
-    Restaraunts.Hakseng: [
-        '가마중식', '누들송(면)', '누들송(카페테리아)',
-        '인터쉐프', '데일리밥', '차이웨이'
+    Restaurants.Hanwool: ['2코너 NOODLE', '3코너 CUTLET', '4코너 RICE.oven', '5코너 GUKBOB.Chef'],
+    Restaurants.Hakseng: [
+        '가마중식', '누들송(면) 중식', '누들송(카페테리아) 중식',
+        '인터쉐프 중식', '데일리밥 중식', '가마 석식', 
+        '인터쉐프 석식', '데일리밥 석식', '차이웨이'
     ],
-    Restaraunts.Gyojikwon: ['키친1', '키친2', '오늘의샐러드'],
-    Restaraunts.Cheonghyang_Han: ['메뉴1', '메뉴2', '메뉴3', '메뉴4'],
-    Restaraunts.Cheonghyang_Yang: ['PASTA', 'RISOTTO', 'STEAK'],
-    Restaraunts.K_Bobplus: ['오늘의도시락', '간편도시락', '김밥', '분식']
+    Restaurants.Gyojikwon: ['키친1', '키친2', '오늘의샐러드', '석식'],
+    Restaurants.Cheonghyang_Han: ['메뉴1', '메뉴2', '메뉴3', '메뉴4'],
+    Restaurants.Cheonghyang_Yang: ['PASTA', 'RISOTTO', 'STEAK'],
+    Restaurants.K_Bobplus: ['간편도시락', '김밥']
 }
 
 class Time:
@@ -49,6 +49,17 @@ class Time:
 HANWOOL_LUNCH = Time((11, 0), (14, 0))
 HANWOOL_DINNER = Time((16, 0), (18, 30))
 HANWOOL_BOTH = Time(HANWOOL_LUNCH.start, HANWOOL_DINNER.end)
+
+HAKSENG_BREAKFAST = Time((8, 0), (10, 0))
+HAKSENG_LUNCH = Time(HAKSENG_BREAKFAST.end, (15, 0))
+HAKSENG_DINNER = Time((17, 0), (18, 30))
+HAKSENG_CHAIWAY = Time((11, 30), (14, 0))
+
+GYOJIKWON_LUNCH = Time((11, 30), (14, 0))
+GYOJIKWON_DINNER = Time((17, 0), (18, 30))
+
+CHEONGHYANG_LUNCH = Time((11, 30), (14, 0))
+CHEONGHYANG_DINNER = Time((17, 0), (18, 30))
 
 class Menu:
     def __init__(self, time: Time, menu: str, cost: int):
@@ -84,13 +95,14 @@ class Corner:
 
         return ret
 
-    # def __str__(self):
-    #     a = [f'{i.name}: {j[1]}({j[2]}원)' for i in weekdays for j in self.menu[i]]
-    #     b = "\n".join(a)
-    #     return f'{self.name}: {b}'
+    # FOR TEST
+    def __str__(self):
+        a = [f'{i.name}: {j}' for i in weekdays for j in self.menu[i]]
+        b = "\n".join(a)
+        return f'{self.name}: {b}'
 
 class Restaurant:
-    def __init__(self, nameEnum: Restaraunts):
+    def __init__(self, nameEnum: Restaurants):
         self.corners = {corner: Corner(corner) for corner in CORNER_NAMES[nameEnum]}
         self.name = nameEnum.name
 
@@ -107,5 +119,6 @@ class Restaurant:
     def addMenu(self, corner: str, weekday: Weekday, time: Time, menu: str, cost: int):
         self.corners[corner].addMenu(weekday, time, menu, cost)
 
-    # def __str__(self):
-    #     return f'!{self.name}!'+"\n".join([*map(str, self.corners.values())])
+    # FOR TEST
+    def __str__(self):
+        return f'!{self.name}!\n'+"\n".join([*map(str, self.corners.values())])
