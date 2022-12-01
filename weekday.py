@@ -11,5 +11,8 @@ class Weekday(enum.Enum):
     Sun = 6
 weekdays = [*Weekday]
 
+## 시간을 KST로 맞춰야 함
 def getTodayWeekday():
+    raise NotImplementedError()
+    datetime.now()
     return weekdays[datetime.today().weekday()]
