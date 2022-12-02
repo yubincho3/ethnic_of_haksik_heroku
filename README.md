@@ -1,1 +1,1 @@
-ethnic-of-haksik의 heroku 호스팅을 위한 레포지토리입니다.
+[ethnic-of-haksik](https://github.com/yubincho3/ethnic_of_haksik)의 heroku 호스팅을 위한 레포지토리입니다.
