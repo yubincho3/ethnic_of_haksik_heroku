@@ -51,7 +51,7 @@ class WebsocketHandler:
 
         try:
             while True:
-                self.handleTimeTable()
+                await self.handleTimeTable()
         except:
             print(f'disconnected: {ip}')
 
