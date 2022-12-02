@@ -6,7 +6,6 @@ import os
 import websocketHandler
 import websockets
 
-# 크롤러 모듈
 from menuCrawler import crawlThisWeeksMenu
 
 async def main():
@@ -25,3 +24,4 @@ async def main():
 
 if __name__ == '__main__':
     asyncio.run(main())
+    print('server stopped.')

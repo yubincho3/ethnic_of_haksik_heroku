@@ -12,6 +12,7 @@ class Weekday(enum.Enum):
     Sun = 6
 weekdays = [*Weekday]
 
+# 오늘의 요일을 가져옵니다.(KST 기준)
 def getTodayWeekday():
     weekday = datetime.now(timezone('Asia/seoul')).weekday()
     return weekdays[weekday]
