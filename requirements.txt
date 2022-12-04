@@ -1,4 +1,4 @@
-websockets
+requests
 bs4
+websockets
 pytz
-lxml
