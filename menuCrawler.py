@@ -19,7 +19,7 @@ def crawlThisWeeksMenu(url: str = CRAWL_URL) -> list[Restaurant]:
         print(e)
         return []
 
-    bs = BeautifulSoup(res.text, 'lxml')
+    bs = BeautifulSoup(res.text, 'html.parser')
 
     # 메뉴판 'name' property가 전부 'aa'? 하드코딩으로...
     menuTexts = [e.get('value') for e in bs.find_all('input', {'name': 'aa'})]
@@ -71,7 +71,6 @@ def crawlThisWeeksMenu(url: str = CRAWL_URL) -> list[Restaurant]:
                 cornerName = CORNER_NAMES[Restaurants.Hanwool][cornerIdx]
 
     # Gukbab.chef
-    cornerIdx += 1
     cornerName = CORNER_NAMES[Restaurants.Hanwool][cornerIdx]
 
     weekdayCnt = Weekday.Mon.value
@@ -367,7 +366,10 @@ def crawlThisWeeksMenu(url: str = CRAWL_URL) -> list[Restaurant]:
     idx += 42
 
     # K-Bob+의 운영시간을 저장한다.
+    # 만약 K-Bob+의 영업시간이 적혀있지 않다면 영업을 하지 않는 것이므로 바로 리턴한다.
     times = []
+    flag = False
+
     for _ in range(5):
         hours = []
 
@@ -383,8 +385,15 @@ def crawlThisWeeksMenu(url: str = CRAWL_URL) -> list[Restaurant]:
 
             i += 1
 
+        if not times:
+            flag = True
+            break
+
         times.append(Time((hours[0], 0), (hours[1], 0)))
         idx += 2
+
+    if flag:
+        return restaurantList
 
     # -------------K-Bob+-------------
     kbobplus = Restaurant(Restaurants.K_Bobplus)
