@@ -9,16 +9,17 @@ import websockets
 from menuCrawler import crawlThisWeeksMenu
 
 async def main():
-    websocketHandler.restaurantList = crawlThisWeeksMenu()
-
     loop = asyncio.get_running_loop()
     stop = loop.create_future()
-    loop.add_signal_handler(signal.SIGTERM, stop.set_result)
+    loop.add_signal_handler(signal.SIGTERM, stop.set_result, None)
+
+    websocketHandler.restaurantList = crawlThisWeeksMenu()
 
     async with websockets.serve(
         websocketHandler.handler,
         host = '',
-        port = int(os.environ['PORT'])
+        #port = int(os.environ['PORT'])
+        port=26656
     ):
         await stop
 
