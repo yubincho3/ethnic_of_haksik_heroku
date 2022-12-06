@@ -21,6 +21,7 @@ class WebsocketHandler:
     # 마크다운 문자열로 가공해서 클라이언트에게 전송합니다.
     async def handleTimeTable(self):
         jsonString = await self.websock.recv()
+        print(f'Received {len(jsonString.encode())} bytes from {self.ip}')
         unableTimes = [tuple(i) for i in json.loads(jsonString)]
         result = ''
 
@@ -42,18 +43,19 @@ class WebsocketHandler:
                 restaurantName = f'## {Restaurants[restaurant.name].value}'
                 result += f'{restaurantName}  \n{menuStr}  \n'
 
+        print(f'Send {len(result.encode())} bytes to {self.ip}')
         await self.websock.send(result)
 
     # 클라이언트 핸들링을 시작합니다.
     async def startHandle(self):
-        ip = self.websock.remote_address[0]
-        print(f'connected: {ip}')
+        self.ip = self.websock.remote_address[0]
+        print(f'{self.ip} is connected')
 
         try:
             while True:
                 await self.handleTimeTable()
         except:
-            print(f'disconnected: {ip}')
+            print(f'{self.ip} is disconnected')
 
 async def handler(websock):
     async with WebsocketHandler(websock) as wsHandler:
